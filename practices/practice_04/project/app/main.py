@@ -2,9 +2,9 @@
 from __future__ import annotations
 
 import re
-from typing import List
+from typing import List, Optional
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Query
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
@@ -90,8 +90,13 @@ def create_task(payload: TaskIn):
 
 
 @app.get("/tasks", response_model=List[Task])
-def list_tasks():
-    return _tasks
+def list_tasks(tag: Optional[str] = Query(None)):
+    if tag is None:
+        return _tasks
+    wanted = tag.strip()
+    if not wanted:
+        raise HTTPException(status_code=400, detail="tag must be non-empty")
+    return [t for t in _tasks if wanted in t.tags]
 
 
 @app.delete("/tasks/{task_id}", status_code=204)
