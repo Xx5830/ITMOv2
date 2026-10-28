@@ -33,3 +33,35 @@ _(заполняется по ходу прохождения — см. ниже
 ## Статус
 
 В процессе.
+
+## Что сделано
+
+**Установка.** Node ≥ 20.19, `npm install -g @fission-ai/openspec@1.14.1`, `openspec init --profile core`
+в `practices/practice_04/project`. Бинарь лежит в `~/.npm-global/bin`, поэтому его нужно добавить в `PATH`.
+
+**Фича.** `GET /tasks?tag=X` — фильтр существующего списка по тегу (из списка идей на слайде 5).
+
+**Цикл OpenSpec (часть 1)**
+
+| Шаг | Артефакт |
+|---|---|
+| Explore | [`explore-notes.md`](explore-notes.md): что уже есть, 5 спорных вопросов, baseline 2/2 |
+| Propose | `proposal.md`, дельта спеки, `design.md`, `tasks.md`; `openspec validate --strict` — valid |
+| Решения человека | пустой/пробельный `tag` → 400; строго один `tag`; `strip()`; тесты в этом же change |
+| Apply (TDD) | `tests/test_filter_by_tag.py` (7 кейсов): красные 5/9, затем зелёные 9/9; правка только `GET /tasks` в `app/main.py` |
+| Archive | `openspec/changes/archive/2026-10-28-get-tasks-by-tag/`, основная спека `openspec/specs/task-filtering/spec.md` |
+
+**Настройка под себя (часть 2).** В `openspec/config.yaml` добавлено `rules.design`:
+«Объясни взаимодействие компонентов диаграммой Mermaid». Правило подхватывается следующим
+`openspec instructions design`; проверить его на новом change.
+
+## Проверка
+
+```sh
+cd practices/practice_04/project && sh scripts/check.sh    # 9 passed
+PATH="$HOME/.npm-global/bin:$PATH" openspec validate --all --no-interactive
+```
+
+## Не сделано
+
+ДЗ 5 (второй SDD-фреймворк, две согласованные спеки UI и логики) — отдельная работа.
