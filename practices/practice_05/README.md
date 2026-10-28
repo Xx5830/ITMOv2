@@ -64,4 +64,4 @@ PATH="$HOME/.npm-global/bin:$PATH" openspec validate --all --no-interactive
 
 ## Не сделано
 
-ДЗ 5 (второй SDD-фреймворк, две согласованные спеки UI и логики) — отдельная работа.
+ДЗ 5 выполнено: см. [`hw5-comparison.md`](hw5-comparison.md) (Spec Kit для логики, OpenSpec для UI, общий контракт, сравнение, рефлексия).

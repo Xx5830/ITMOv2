@@ -106,6 +106,13 @@
         <button id="add-btn">Добавить</button>
       </div>
 
+      <div>
+        <label for="search">Поиск по названию</label>
+        <input id="search" type="text" placeholder="часть названия" autocomplete="off" />
+        <div id="search-error" style="display:none;font-size:13px;margin-bottom:6px;"></div>
+        <div id="search-status" style="display:none;font-size:13px;margin-bottom:6px;"></div>
+      </div>
+
       <div class="tasks-list" id="tasks-list"></div>
     </aside>
 
@@ -182,16 +189,49 @@
       return fetch(url, opts).finally(() => clearTimeout(id));
     }
 
-    async function refreshTasks() {
+    const searchInput = document.getElementById('search');
+    const searchError = document.getElementById('search-error');
+    const searchStatus = document.getElementById('search-status');
+    let searchQuery = '';
+    let requestSeq = 0;
+    let searchTimer = null;
+
+    function setSearchMessage(el, text) {
+      el.textContent = text || '';
+      el.style.display = text ? 'block' : 'none';
+    }
+
+    async function refreshTasks(q = searchQuery) {
+      const seq = ++requestSeq;
+      const isStale = () => seq !== requestSeq;
+      if (q) setSearchMessage(searchStatus, 'поиск…');
       try {
-        const resp = await fetchWithTimeout('/tasks', {}, 3000);
+        const url = q ? '/tasks?q=' + encodeURIComponent(q) : '/tasks';
+        const resp = await fetchWithTimeout(url, {}, 3000);
+        if (isStale()) return;
+        if (resp.status === 400) {
+          let detail = 'некорректный запрос';
+          try { const body = await resp.json(); if (body && typeof body.detail === 'string') detail = body.detail; } catch {}
+          setSearchMessage(searchStatus, '');
+          setSearchMessage(searchError, detail);
+          return;
+        }
         if (!resp.ok) throw new Error('HTTP ' + resp.status);
         const tasks = await resp.json();
+        if (isStale()) return;
+        setSearchMessage(searchError, '');
+        setSearchMessage(searchStatus, q && tasks.length === 0 ? 'ничего не найдено' : '');
         currentData = tasks;
-        saveCache(tasks);
+        if (!q) saveCache(tasks);
         hideBanner();
         render(tasks);
       } catch (e) {
+        if (isStale()) return;
+        setSearchMessage(searchStatus, '');
+        if (q) {
+          showBanner('не удалось связаться с сервером, показан последний известный список');
+          return;
+        }
         const cached = loadCache();
         if (cached.length) {
           showBanner('не удалось связаться с сервером, показан последний известный список');
@@ -204,6 +244,15 @@
         }
       }
     }
+
+    searchInput.addEventListener('input', () => {
+      clearTimeout(searchTimer);
+      searchTimer = setTimeout(() => {
+        searchQuery = searchInput.value.trim();
+        setSearchMessage(searchError, '');
+        refreshTasks(searchQuery);
+      }, 300);
+    });
 
     async function addTask(title, tagsCsv) {
       const tags = tagsCsv.split(',').map(s => s.trim()).filter(Boolean);

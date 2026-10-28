@@ -90,13 +90,29 @@ def create_task(payload: TaskIn):
 
 
 @app.get("/tasks", response_model=List[Task])
-def list_tasks(tag: Optional[str] = Query(None)):
-    if tag is None:
-        return _tasks
-    wanted = tag.strip()
-    if not wanted:
-        raise HTTPException(status_code=400, detail="tag must be non-empty")
-    return [t for t in _tasks if wanted in t.tags]
+def list_tasks(tag: Optional[str] = Query(None), q: Optional[str] = Query(None)):
+    # Start from full list and apply filters incrementally to preserve creation order
+    result = _tasks
+
+    # Existing tag filter (exact membership, case-sensitive)
+    if tag is not None:
+        wanted_tag = tag.strip()
+        if not wanted_tag:
+            raise HTTPException(status_code=400, detail="tag must be non-empty")
+        result = [t for t in result if wanted_tag in t.tags]
+
+    # Optional q filter (case-insensitive substring on title)
+    if q is None:
+        return result
+
+    wanted_q = q.strip()
+    if not wanted_q:
+        raise HTTPException(status_code=400, detail="q must be non-empty")
+    if len(wanted_q) > 100:
+        raise HTTPException(status_code=400, detail="q must be at most 100 characters")
+
+    lower_q = wanted_q.lower()
+    return [t for t in result if lower_q in t.title.lower()]
 
 
 @app.delete("/tasks/{task_id}", status_code=204)
