@@ -1,6 +1,6 @@
 # Общий контракт поиска (UI ↔ API)
 
-Согласован между спекой логики (Spec Kit, `specs/001-title-search/`) и спекой UI
+Согласован между спекой логики (Spec Kit, `specs/002-title-search/`) и спекой UI
 (OpenSpec, `openspec/changes/search-tasks-ui/`) до написания кода.
 
 ## Запрос
